@@ -1,0 +1,4 @@
+Dataset: Breast Cancer Diagnostic Data (Kaggle)
+Records: 569 samples, 30 numeric features 
+Target: Diagnosis (Malignant = 1, Benign = 0) 
+Purpose: Predict priority/criticality of issues for resource allocation.
