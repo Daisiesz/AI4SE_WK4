@@ -1,0 +1,149 @@
+
+AI Development Workflow Assessment
+
+Part 1: Short Answer Questions 
+1. Problem Definition 
+Define a hypothetical AI problem (e.g., "Predicting student dropout rates").
+Problem: "Predicting student dropout rates" is a binary classification problem. The goal is to build a model that analyzes various student-related data points (e.g., academic, demographic, and behavioral) to predict the likelihood (e.g., High Risk vs. Low Risk) that a student will leave their academic program before graduation.
+List 3 objectives and 2 stakeholders.
+Objectives:
+Proactive Intervention: To identify at-risk students early enough for counselors or faculty to intervene with support services (e.g., tutoring, counseling, financial aid).
+Resource Allocation: To help the institution allocate limited support resources (like tutoring budgets or counselors' time) more efficiently to the students who need them most.
+Improve Retention Rates: To measurably increase the institution's overall student retention and graduation rates, which is a key metric for academic success and funding.
+Stakeholders:
+Academic Advisors & Student Support Staff: They are the end-users who will receive the model's predictions and use them to personalize their student outreach.
+University Administration (e.g., Deans, Registrar): They are responsible for the institution's overall performance and will use the model's aggregate data to understand dropout trends and measure the impact of retention strategies.
+Propose 1 Key Performance Indicator (KPI) to measure success.
+KPI: Recall (or Sensitivity). This metric is calculated as True Positives / (True Positives + False Negatives). In this context, it measures: "Of all the students who actually would have dropped out, what percentage did our model successfully identify?" This is the most critical KPI because the primary goal is to find at-risk students. A "False Negative" (missing a student who then drops out) is the worst possible outcome, as it represents a missed opportunity to help.
+2. Data Collection & Preprocessing 
+Identify 2 data sources for your problem.
+Student Information System (SIS): This database contains static and demographic data, such as age, high school GPA, geographic location (zip code), major, socioeconomic status (e.g., financial aid status), and enrollment type (full-time/part-time).
+Learning Management System (LMS) (e.g., Canvas, Moodle): This provides dynamic behavioral and academic data, such as login frequency, assignment submission timeliness, grades on quizzes/exams, and forum participation.
+Explain 1 potential bias in the data.
+Socioeconomic Bias: Data like "financial aid status" or "zip code" can be strong proxies for socioeconomic background. A model might incorrectly learn to associate lower socioeconomic status with a higher risk of dropping out, simply because this group has historically faced more external challenges (e.g., needing to work more hours, less access to high-speed internet). This creates a biased model that unfairly flags low-income students, potentially leading to stigma or a self-fulfilling prophecy, rather than identifying the true academic or engagement-based root causes.
+Outline 3 preprocessing steps (e.g., handling missing data, normalization).
+Handling Missing Data: Many students might have missing data (e.g., a missing quiz grade). This must be addressed. We could use imputation (e.g., filling the missing grade with the class average) or, if a feature is missing for many students, create a new binary feature called is_grade_missing that the model can learn from.
+Feature Engineering: This involves creating new, more informative features from existing ones. For example, we could combine assignment_grades and submission_timeliness to create a "Grade Trend" feature (is the student's performance improving or declining?) or a "Days Since Last Login" feature from the LMS data.
+Normalization: The data has features on different scales (e.g., GPA is 0-4.0, while num_logins could be 0-1000). Models like Neural Networks or SVMs are sensitive to this. We would use Standardization (or Z-score normalization) to rescale all numerical features to have a mean of 0 and a standard deviation of 1, ensuring all features contribute equally to the model's calculations.
+3. Model Development
+Choose a model (e.g., Random Forest, Neural Network) and justify your choice.
+Model: Random Forest.
+Justification: This is a powerful and versatile choice for this problem for three main reasons:
+It handles a mix of numerical data (like GPA) and categorical data (like 'major') without extensive pre-processing.
+It's an ensemble method, meaning it's highly robust and less prone to overfitting compared to a single decision tree.
+Crucially, it provides feature importance, which tells us why it made a prediction (e.g., "this student was flagged 70% due to low login rates and 30% due to declining grades"). This interpretability is vital for the stakeholders (advisors) to trust and act on the prediction.
+Describe how you would split data into training/validation/test sets.
+The data would be split into three distinct sets, typically using stratified sampling to ensure the proportion of "dropout" students (the minority class) is the same in each set.
+Training Set (e.g., 70% of data): This is the majority of the data, used to teach the model the underlying patterns associated with dropping out.
+Validation Set (e.g., 15% of data): This set is used during development to tune the model's hyperparameters (like max_depth) and make decisions about the model's architecture, checking for overfitting as we build.
+Test Set (e.g., 15% of data): This set is "locked away" and used only once at the very end of development. Its performance provides the final, unbiased estimate of how the model will perform on new, unseen student data.
+Name 2 hyperparameters you would tune and why.
+n_estimators (Number of Trees): This is the number of individual decision trees to build in the forest. Tuning this is a trade-off: too few trees will lead to underfitting (the model isn't complex enough), while too many adds computational cost for diminishing returns and can slightly increase overfitting.
+max_depth (Maximum Depth of each Tree): This controls how deep each tree can grow. A very high depth allows the tree to learn very specific, granular patterns (e.g., "this one student who logs in on Tuesdays..."), which leads to overfitting (memorizing the training data). Tuning this finds the best balance between capturing complex relationships and generalizing to new students.
+4. Evaluation & Deployment (8 points)
+Select 2 evaluation metrics and explain their relevance.
+Recall (Sensitivity): As mentioned for the KPI, this is the most important metric. It answers: "Of all the true dropout risks, how many did we catch?" We must maximize this metric to ensure we don't miss students who need help.
+Precision: This is calculated as True Positives / (True Positives + False Positives). It answers: "Of all the students we flagged as high-risk, how many were actually high-risk?" This metric is important for stakeholder trust and resource efficiency. If precision is low (many False Positives), advisors will waste time on students who are fine, leading to "alert fatigue" and distrust in the system.
+What is concept drift? How would you monitor it post-deployment?
+Concept Drift: This is a phenomenon where the underlying statistical properties of the data (and the relationships between features and the target) change over time. The "concept" the model learned (e.g., why students drop out) becomes outdated and no longer reflects reality, causing the model's accuracy to degrade. For example, a global pandemic could suddenly make "on-campus attendance" an irrelevant feature and "internet access" a critical one.
+Monitoring: You would monitor for drift by:
+Monitoring Data Distributions: Automatically tracking key input features (e.g., average login frequency, average grades). If these "data drifts" (e.g., average logins suddenly drop by 50% for all students), it's a warning that the model's assumptions are no longer valid.
+Monitoring Model Performance: Continuously feeding new, labeled data (e.g., students who dropped out last-month) into the model and tracking its performance (e.g., Recall). If the Recall score begins to trend downward month-over-month, it's a clear sign of concept drift, and the model must be retrained on more recent data.
+Describe 1 technical challenge during deployment (e.g., scalability).
+Data Pipelining and Integration: The model is only useful if it has fresh data. A major technical challenge is building a robust, real-time data pipeline that can:
+Reliably Extract data from disparate, often old, systems (the SIS and the LMS).
+Transform this data into the exact format the model expects.
+Load it into a database and serve it to the model for inference, all with low latency (so the prediction is available when the advisor needs it). This ETL (Extract, Transform, Load) pipeline is complex, brittle, and critical to the project's success.
+
+Part 2: Case Study Application 
+Scenario: A hospital wants an AI system to predict patient readmission risk within 30 days of discharge.
+1. Problem Scope 
+Problem: To develop a binary classification model that provides a real-time risk score (e.g., 0-100%) for each patient at the point of discharge, predicting their likelihood of an unplanned readmission within 30 days.
+Objectives:
+To systematically identify high-risk patients before they leave the hospital.
+To enable targeted, cost-effective post-discharge interventions (e.g., follow-up calls from a nurse, home visit, medication review) for this high-risk group.
+To reduce the hospital's overall 30-day readmission rate, thereby improving patient outcomes and avoiding costly penalties from insurers.
+Stakeholders:
+Clinical Staff (Doctors, Nurses): They will use the score as a decision-support tool to inform discharge plans.
+Hospital Case Managers/Discharge Planners: They will use the score to prioritize and allocate post-discharge support resources.
+Patients: They are the subjects of the prediction and will (or will not) receive additional support based on its output.
+Hospital Administration: They are responsible for the financial and quality-of-care metrics tied to readmissions.
+2. Data Strategy 
+Propose data sources (e.g., EHRs, demographics).
+Electronic Health Records (EHRs): This is the primary source. It includes:
+Clinical Data: Diagnoses (ICD-10 codes), procedures, medications prescribed, lab results (e.g., A1c, creatinine), vital signs at admission/discharge.
+Admission Data: Length of stay, admission type (elective vs. emergency), number of prior hospitalizations.
+Patient Demographics File: Age, gender, insurance type (e.g., Medicare, private, uninsured).
+Discharge Information: The patient's "discharge destination" (e.g., home, home with services, skilled nursing facility).
+Identify 2 ethical concerns (e.g., patient privacy).
+Patient Privacy (HIPAA Compliance): The model requires access to an extreme amount of Protected Health Information (PHI). There is a significant risk of a data breach. All data must be de-identified before training, and the live model (which does see PHI) must have strict access controls, auditing, and encryption (both in transit and at rest).
+Algorithmic Bias and Health Equity: The model could inadvertently learn and amplify existing health disparities. For example, if it uses "insurance type" or "zip code" as a feature, it might associate patients from low-income areas (who historically have poorer access to primary care) with higher readmission risk. This could unfairly label them as "high-risk," or worse, if the bias goes the other way, it could under-score their risk, causing them to be denied post-discharge support and leading to poorer health outcomes.
+Design a preprocessing pipeline (include feature engineering steps).
+Data Cleaning: Handle missing values (e.g., impute median for missing lab values), standardize categorical labels (e.g., "Diabetes Mellitus" and "DM" become "DIABETES"), and remove outlier data points (e.g., a "length of stay" of 365 days).
+Feature Engineering: This is crucial for medical data.
+Create a "Comorbidity Score" by counting the number of chronic conditions (e.g., from the Elixhauser Comorbidity Index) for each patient.
+Create a "Prior Utilization" feature by counting the number of ER visits and hospital admissions in the past 6 months.
+Bin "Age" into clinically relevant groups (e.g., <50, 50-65, 66-80, 80+).
+Encoding: One-hot encode categorical features like admission_type ([Emergency, Elective, Urgent]) so the model can process them mathematically.
+Scaling: Use StandardScaler on all numerical features (e.g., length_of_stay, lab_results) so they are all on the same scale, preventing features with large values from dominating the model.
+Imbalance Handling: The "readmitted" class will be small (e.g., <15% of patients). Use a technique like SMOTE (Synthetic Minority Over-sampling Technique) on the training data only to create synthetic examples of readmitted patients, helping the model learn their patterns better.
+3. Model Development 
+Select a model and justify it.
+Model: Logistic Regression.
+Justification: In healthcare, interpretability and trust are often more important than a minor gain in accuracy. A "black box" model like a deep neural network is unacceptable if a doctor cannot understand why it's making a prediction. Logistic Regression is highly interpretable. It provides clear coefficients for each feature (e.g., "For every 1-day increase in length of stay, the odds of readmission increase by 15%"). This transparency allows clinicians to validate the model's reasoning against their own expertise and trust its output.
+Create a confusion matrix and calculate precision/recall (hypothetical data).
+Hypothetical Scenario: We test our model on a test set of 200 patients. In reality, 30 of them were readmitted.
+Model Results:
+The model predicted 25 patients would be readmitted. Of those 25, 20 were actually readmitted.
+Data Points:
+True Positives (TP): Predicted Readmit, Was Readmit = 20
+False Positives (FP): Predicted Readmit, Was NOT Readmit = 25 - 20 = 5
+False Negatives (FN): Predicted NOT Readmit, Was Readmit = 30 (total actual) - 20 (found) = 10
+True Negatives (TN): Predicted NOT Readmit, Was NOT Readmit = 170 (total actual not) - 5 (FP) = 165
+Confusion Matrix:
+| | Predicted: Readmit | Predicted: Not Readmit |
+| :--- | :---: | :---: |
+| Actual: Readmit | 20 (TP) | 10 (FN) |
+| Actual: Not Readmit | 5 (FP) | 165 (TN) |
+Precision: TP / (TP + FP) = 20 / (20 + 5) = 80.0%
+Interpretation: Of the patients we flagged for intervention, 80% were correct.
+Recall: TP / (TP + FN) = 20 / (20 + 10) = 66.7%
+Interpretation: We successfully identified 66.7% (two-thirds) of all patients who were readmitted.
+4. Deployment 
+Outline steps to integrate the model into the hospital’s system.
+API-ization: Package the trained and validated model into a secure, scalable REST API endpoint, hosted on a HIPAA-compliant cloud or on-premise server.
+EHR Integration: Work with the hospital's IT team to integrate this API directly into the Electronic Health Record (EHR) system.
+Trigger Event: The API call should be triggered automatically when a clinician opens the "Discharge Orders" for a patient.
+Data Flow: The EHR will (1) securely send the required patient data (labs, age, etc.) to the API, (2) the API will return a JSON response with the risk score (e.g., {"risk": 78.5, "factors": ["prior_admit", "lab_A"]}), and (3) the EHR will display this as a "Readmission Risk" score in the user interface.
+User Interface: Display the score clearly and non-intrusively, with the top 3-5 contributing factors, to help the clinician understand why the score is high.
+How would you ensure compliance with healthcare regulations (e.g., HIPAA)?
+Data Minimization: The API endpoint should be designed to only accept the minimum set of features required for the prediction (e.g., it should not accept patient name or address).
+Strict Access Control: Only authenticated and authorized users (e.g., doctors, case managers) within the hospital's secure network can trigger the model. All API calls must be logged and audited.
+End-to-End Encryption: All data must be encrypted in transit (using TLS/SSL between the EHR and the API) and at rest (in any logs or model storage).
+Business Associate Agreement (BAA): If any part of the model is hosted on a third-party cloud (like AWS, Google Cloud, or Azure), a BAA must be in place, as this is a legal requirement under HIPAA for any vendor handling PHI.
+5. Optimization (5 points)
+Propose 1 method to address overfitting.
+Method: L1 (Lasso) Regularization.
+Explanation: Overfitting is when the model learns the "noise" in the training data, not just the true signal. Since we chose Logistic Regression, L1 Regularization is an excellent technique. It adds a penalty to the model's loss function that is proportional to the absolute value of the coefficients. This penalty forces the model to be "simpler" by shrinking the coefficients of less-important features to zero, effectively performing automatic feature selection. This ensures the model only relies on the most robust, predictive features, making it generalize much better to new, unseen patients.
+
+Part 3: Critical Thinking 
+1. Ethics & Bias
+How might biased training data affect patient outcomes in the case study?
+Biased training data can have severe, negative impacts on patient outcomes. For example, if the hospital's historical data reflects that patients from a specific (e.g., low-income) zip code have less access to post-discharge primary care and thus a higher readmission rate, the model will learn this correlation. It will learn: zip_code_X = high_risk.
+This has two dangerous outcomes:
+For the under-resourced group: It may seem "correct" to flag them, but it reinforces a systemic inequity. It punishes the patient for a social failure, not a clinical one, and could lead to doctors viewing them as "non-compliant" rather than "un-resourced."
+For other groups: A more insidious outcome is if a minority group has been historically under-served or their symptoms dismissed. The data might show them as having fewer readmissions (because they were never admitted in the first place or didn't return). The model would learn this bias and incorrectly assign them a falsely low-risk score, causing them to be denied the post-discharge support they desperately need and leading directly to preventable readmissions or even death.
+Suggest 1 strategy to mitigate this bias.
+Strategy: Algorithmic Fairness Auditing and Re-weighting.
+Mitigation: Before deployment, the model's performance (specifically its False Negative Rate and False Positive Rate) must be audited across different protected subgroups (e.g., race, gender, insurance type). If the model's error rate is significantly higher for one group (e.g., it misses 30% of readmissions for Group A but only 10% for Group B), it is biased. One mitigation strategy is re-weighting, where the algorithm is "told" to pay more attention to the errors it makes on the under-served group during training (by assigning a higher "weight" to their data points), forcing it to work harder to get the predictions for that group correct and achieve more equitable performance.
+2. Trade-offs 
+Discuss the trade-off between model interpretability and accuracy in healthcare.
+This is the central trade-off in clinical AI.
+High Accuracy (e.g., Deep Neural Network): These "black box" models can be incredibly accurate, potentially finding complex, non-linear patterns in data that a human or simple model would miss. This could lead to theoretically better predictions.
+High Interpretability (e.g., Logistic Regression): These "glass box" models are simpler and may be slightly less accurate, but their reasoning is transparent.
+The Trade-off: In healthcare, a 2% accuracy gain is almost never worth sacrificing interpretability. A doctor will not (and should not) trust a prediction they cannot understand. If a black box model says "high-risk" and the doctor's clinical judgment says "low-risk," the doctor will ignore the model, leading to zero real-world benefit ("alert fatigue"). However, if an interpretable model says "high-risk" because "creatinine is rising and patient has a history of CHF," the doctor can combine that insight with their own judgment to make a better-informed decision. In medicine, a model that is trusted and used is infinitely better than a "more accurate" model that is ignored.
+If the hospital has limited computational resources, how might this impact model choice?
+Limited computational resources (e.g., no GPUs, standard-issue servers) create a significant constraint that strongly favors simpler, more established models.
+It rules out: Deep Learning (Neural Networks) and large-scale ensemble models (like a Random Forest with thousands of trees). These models are "computationally expensive"—they require powerful (and costly) GPUs for training, and they can be slow and memory-intensive for inference (making predictions).
+It favors: Models like Logistic Regression, Naive Bayes, or simple Decision Trees. These models are computationally "cheap." They can be trained quickly (often in seconds or minutes) on a single, standard CPU. More importantly, they are extremely fast and lightweight for inference, meaning they can be easily integrated into an existing EHR system without requiring the hospital to purchase expensive new hardware. Thus, the resource constraint pushes the choice towards the same models that are also more interpretable.
+
